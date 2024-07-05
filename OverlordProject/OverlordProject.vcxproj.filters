@@ -91,4 +91,8 @@
     <ClInclude Include="Prefabs\Button.h" />
     <ClInclude Include="Scenes\GradWork\SummonTestScene.h" />
   </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="..\3rdParty\FastNoise2\bin\FastNoise.dll" />
+    <CopyFileToFolders Include="..\3rdParty\FastNoise2\bin\FastNoiseD.dll" />
+  </ItemGroup>
 </Project>
