@@ -45,6 +45,7 @@
     <ClCompile Include="Prefabs\Door.cpp" />
     <ClCompile Include="Prefabs\Button.cpp" />
     <ClCompile Include="Scenes\GradWork\SummonTestScene.cpp" />
+    <ClCompile Include="noise\NoiseGenerator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainGame.h" />
@@ -90,6 +91,7 @@
     <ClInclude Include="Prefabs\Door.h" />
     <ClInclude Include="Prefabs\Button.h" />
     <ClInclude Include="Scenes\GradWork\SummonTestScene.h" />
+    <ClInclude Include="noise\NoiseGenerator.h" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\3rdParty\FastNoise2\bin\FastNoise.dll" />

@@ -102,6 +102,7 @@
     <ClCompile Include="Materials\Game\FlowingWater.cpp" />
     <ClCompile Include="Materials\Game\Post\PostUnderwater.cpp" />
     <ClCompile Include="Materials\Game\SkyboxMaterial.cpp" />
+    <ClCompile Include="noise\NoiseGenerator.cpp" />
     <ClCompile Include="Prefabs\Button.cpp" />
     <ClCompile Include="Prefabs\Coin.cpp" />
     <ClCompile Include="Prefabs\Door.cpp" />
@@ -165,6 +166,7 @@
     <ClInclude Include="Materials\Game\FlowingWater.h" />
     <ClInclude Include="Materials\Game\Post\PostUnderwater.h" />
     <ClInclude Include="Materials\Game\SkyboxMaterial.h" />
+    <ClInclude Include="noise\NoiseGenerator.h" />
     <ClInclude Include="Prefabs\Button.h" />
     <ClInclude Include="Prefabs\Coin.h" />
     <ClInclude Include="Prefabs\Door.h" />

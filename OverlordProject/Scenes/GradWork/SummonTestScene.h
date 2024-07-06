@@ -7,7 +7,10 @@
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
 
+#include "noise/NoiseGenerator.h"
+
 class CubePrefab;
+
 class SummonTestScene : public GameScene
 {
 public:
@@ -27,15 +30,9 @@ protected:
 
 private:
 	CubePrefab* m_pCube{ nullptr };
+	NoiseGenerator m_NoiseMapGen;
 
-
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> textureView;
-	std::vector<uint8_t> image;
-	int width = 256;
-	int height = 256;
-
-	std::vector<float> GenerateNoiseMap(int width, int height);
-	std::vector<uint8_t> ConvertNoiseMapToImage(const std::vector<float>& noiseMap, int width, int height);
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> CreateTextureFromImage(ID3D11Device* device, const std::vector<uint8_t>& image, int width, int height);
-
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_textureView;
+	int m_width = 256;
+	int m_height = 256;	
 };
