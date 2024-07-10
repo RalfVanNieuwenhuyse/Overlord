@@ -1,16 +1,60 @@
 #include "stdafx.h"
 #include "NoiseGenerator.h"
 
-#include "FastNoise/FastNoise.h"
+
 #include "OverlordAPI.h"
+
+const char* noiseTypeNames[] = {
+	"Perlin",
+	"Simplex",
+	"OpenSimplex2",
+	"OpenSimplex2S",
+	"CellularDistance",
+	"CellularValue",
+	"Value"
+};
 
 void NoiseGenerator::DrawImGui()
 {
-	if (ImGui::CollapsingHeader("NoiseMap"))
+	if (ImGui::CollapsingHeader("NoiseMap"), ImGuiTreeNodeFlags_DefaultOpen)
 	{
-		ImGui::DragInt2("Map size", reinterpret_cast<int*>(&m_MapSize), 256, 256);
+		bool valueChanged = false;
+
+		valueChanged |= ImGui::DragInt2("Map size", reinterpret_cast<int*>(&m_MapSize),1.f,64,INT_MAX);
+		if (valueChanged)
+		{
+			if (m_MapSize.x < 64) m_MapSize.x = 64;
+			if (m_MapSize.y < 64) m_MapSize.y = 64;
+		}
 	
-		if (ImGui::Button("generate noise map"))
+		valueChanged |= ImGui::DragFloat("Scale", reinterpret_cast<float*>(&m_Scale));
+		valueChanged |= ImGui::DragInt2("Offset", reinterpret_cast<int*>(&m_Offset));
+
+		
+
+		int currentNoiseTypeIndex = static_cast<int>(M_NoiseType);
+
+		if (ImGui::Combo("Noise Type", &currentNoiseTypeIndex, noiseTypeNames, IM_ARRAYSIZE(noiseTypeNames)))
+		{
+			valueChanged |= true;
+			M_NoiseType = static_cast<NoiseType>(currentNoiseTypeIndex);
+		}
+
+		valueChanged |= ImGui::DragInt("Seed", reinterpret_cast<int*>(&m_Seed));
+
+		valueChanged |= ImGui::DragInt("Octaves", reinterpret_cast<int*>(&m_Octaves),1.f,0, INT_MAX);
+		if (valueChanged)
+		{
+			if (m_Octaves < 0) m_Octaves = 0;
+			
+		}
+
+		valueChanged |= ImGui::DragFloat("Gain", reinterpret_cast<float*>(&m_Gain),0.01f);
+		valueChanged |= ImGui::DragFloat("Lacunarity", reinterpret_cast<float*>(&m_Lacunarity), 0.01f);
+			
+
+		valueChanged |= ImGui::Checkbox("Auto generate on change", &m_AutoGen);
+		if (ImGui::Button("generate noise map")|| (valueChanged&& m_AutoGen))
 		{			
 			auto noiseMap = GenerateNoiseMap(m_MapSize.x, m_MapSize.y);
 			auto divice = SceneManager::Get()->GetActiveSceneContext().d3dContext.pDevice;
@@ -27,15 +71,44 @@ std::vector<float> NoiseGenerator::GenerateNoiseMap(int width, int height)
 {
 	m_NoiseMap.clear();
 
-	auto simplex = FastNoise::New<FastNoise::Perlin>();
+	FastNoise::SmartNode<FastNoise::Generator> noiseType = FastNoise::New<FastNoise::Perlin>();
+	switch (M_NoiseType)
+	{
+	case NoiseGenerator::NoiseType::Perlin:
+		noiseType = FastNoise::New<FastNoise::Perlin>();
+		break;
+	case NoiseGenerator::NoiseType::Simplex:
+		noiseType = FastNoise::New<FastNoise::Simplex>();
+		break;
+	case NoiseGenerator::NoiseType::OpenSimplex2:
+		noiseType = FastNoise::New<FastNoise::OpenSimplex2>();
+		break;
+	case NoiseGenerator::NoiseType::OpenSimplex2S:
+		noiseType = FastNoise::New<FastNoise::OpenSimplex2S>();
+		break;	
+	case NoiseGenerator::NoiseType::CellularDistance:
+		noiseType = FastNoise::New<FastNoise::CellularDistance>();
+		break;	
+	case NoiseGenerator::NoiseType::CellularValue:
+		noiseType = FastNoise::New<FastNoise::CellularValue>();
+		break;
+	case NoiseGenerator::NoiseType::Value:
+		noiseType = FastNoise::New<FastNoise::Value>();
+		break;
+	default:
+		break;
+	}
+
 	auto fractal = FastNoise::New<FastNoise::FractalFBm>();
 
-	fractal->SetSource(simplex);
-	fractal->SetOctaveCount(5);
-
+	fractal->SetSource(noiseType);
+	fractal->SetOctaveCount(m_Octaves);
+	fractal->SetGain(m_Gain);
+	fractal->SetLacunarity(m_Lacunarity);
+	
 	std::vector<float> noise(width * height);
 
-	fractal->GenUniformGrid2D(noise.data(), 0, 0, width, height, 0.02f, 1337);
+	fractal->GenUniformGrid2D(noise.data(), m_Offset.x, m_Offset.y, width, height, 1.f/ m_Scale, m_Seed);
 
 	m_NoiseMap = noise;
 	m_width = width;
@@ -66,7 +139,6 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> NoiseGenerator::CreateTextureFr
 	HRESULT hr = device->CreateTexture2D(&desc, &initData, &texture);
 	if (FAILED(hr))
 	{
-		// Handle error
 		return nullptr;
 	}
 
@@ -79,8 +151,7 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> NoiseGenerator::CreateTextureFr
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> maptextureView;
 	hr = device->CreateShaderResourceView(texture.Get(), &srvDesc, &maptextureView);
 	if (FAILED(hr))
-	{
-		// Handle error
+	{			
 		return nullptr;
 	}
 

@@ -7,6 +7,7 @@
 void SummonTestScene::Initialize()
 {
 	m_SceneContext.settings.enableOnGUI = true;
+	
 }
 
 void SummonTestScene::Update()
@@ -38,17 +39,4 @@ void SummonTestScene::OnGUI()
 	}
 
 	m_NoiseMapGen.DrawImGui();
-
-    /*if (ImGui::Button("gen")) 
-	{
-		NoiseGenerator noise;		
-        auto noiseMap = noise.GenerateNoiseMap(m_width, m_height);  
-		m_textureView = noise.CreateTextureFromImage(GetSceneContext().d3dContext.pDevice);
-    }
-
-    if (m_textureView) {
-       
-        ImGui::Image((void*)m_textureView.Get(), ImVec2(static_cast<float>(m_width), static_cast<float>(m_height)));
-        
-    }*/
 }
