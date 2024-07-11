@@ -11,6 +11,7 @@
 
 
 
+
 class NoiseGenerator
 {	
 public:
@@ -24,7 +25,11 @@ public:
 
 	void DrawImGui();
 
+	void Generate();
+
 	std::vector<float> GetNoiseMap() const { return m_NoiseMap; };
+	XMINT2 GetMapSize() const { return m_MapSize; };
+	bool GetValueChanged() const { return m_ValueChanged; }
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> GetTexture() const { return m_TextureVieuw; };
 
 	std::vector<float> GenerateNoiseMap(int width, int height);
@@ -58,8 +63,8 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_TextureVieuw;
 
-	std::vector<uint8_t> ConvertNoiseMapToImage(const std::vector<float>& noiseMap);
+	bool m_ValueChanged{false};
 
-	
+	std::vector<uint8_t> ConvertNoiseMapToImage(const std::vector<float>& noiseMap);
 };
 

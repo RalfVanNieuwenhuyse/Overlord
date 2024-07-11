@@ -102,6 +102,7 @@
     <ClCompile Include="Materials\Game\FlowingWater.cpp" />
     <ClCompile Include="Materials\Game\Post\PostUnderwater.cpp" />
     <ClCompile Include="Materials\Game\SkyboxMaterial.cpp" />
+    <ClCompile Include="noise\MeshGenerator.cpp" />
     <ClCompile Include="noise\NoiseGenerator.cpp" />
     <ClCompile Include="Prefabs\Button.cpp" />
     <ClCompile Include="Prefabs\Coin.cpp" />
@@ -154,6 +155,7 @@
     <ClCompile Include="Scenes\Week 4\UberMaterialScene.cpp" />
     <ClCompile Include="Materials\UberMaterial.cpp" />
     <ClCompile Include="Scenes\GradWork\SummonTestScene.cpp" />
+    <ClCompile Include="noise\TerrainGenrerator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OverlordEngine\OverlordEngine.vcxproj">
@@ -161,11 +163,13 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ImGui_Curve.h" />
     <ClInclude Include="Materials\Game\EntityMaterial.h" />
     <ClInclude Include="Materials\Game\EntityMaterial_Skinned.h" />
     <ClInclude Include="Materials\Game\FlowingWater.h" />
     <ClInclude Include="Materials\Game\Post\PostUnderwater.h" />
     <ClInclude Include="Materials\Game\SkyboxMaterial.h" />
+    <ClInclude Include="noise\MeshGenerator.h" />
     <ClInclude Include="noise\NoiseGenerator.h" />
     <ClInclude Include="Prefabs\Button.h" />
     <ClInclude Include="Prefabs\Coin.h" />
@@ -205,6 +209,7 @@
     <ClInclude Include="Scenes\Week 4\UberMaterialScene.h" />
     <ClInclude Include="Materials\UberMaterial.h" />
     <ClInclude Include="Scenes\GradWork\SummonTestScene.h" />
+    <ClInclude Include="noise\TerrainGenrerator.h" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\3rdParty\FastNoise2\bin\FastNoise.dll">

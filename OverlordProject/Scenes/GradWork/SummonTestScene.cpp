@@ -6,8 +6,7 @@
 
 void SummonTestScene::Initialize()
 {
-	m_SceneContext.settings.enableOnGUI = true;
-	
+	m_SceneContext.settings.enableOnGUI = true;	
 }
 
 void SummonTestScene::Update()
@@ -38,5 +37,5 @@ void SummonTestScene::OnGUI()
 		AddChild(m_pCube);		
 	}
 
-	m_NoiseMapGen.DrawImGui();
+	m_TerrainGen.DrawImGui();
 }

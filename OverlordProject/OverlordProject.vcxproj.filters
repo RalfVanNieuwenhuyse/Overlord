@@ -46,6 +46,8 @@
     <ClCompile Include="Prefabs\Button.cpp" />
     <ClCompile Include="Scenes\GradWork\SummonTestScene.cpp" />
     <ClCompile Include="noise\NoiseGenerator.cpp" />
+    <ClCompile Include="noise\MeshGenerator.cpp" />
+    <ClCompile Include="noise\TerrainGenrerator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainGame.h" />
@@ -92,6 +94,9 @@
     <ClInclude Include="Prefabs\Button.h" />
     <ClInclude Include="Scenes\GradWork\SummonTestScene.h" />
     <ClInclude Include="noise\NoiseGenerator.h" />
+    <ClInclude Include="noise\MeshGenerator.h" />
+    <ClInclude Include="ImGui_Curve.h" />
+    <ClInclude Include="noise\TerrainGenrerator.h" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\3rdParty\FastNoise2\bin\FastNoise.dll" />

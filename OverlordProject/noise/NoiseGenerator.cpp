@@ -4,6 +4,9 @@
 
 #include "OverlordAPI.h"
 
+//#include "ImGui_Curve.h"
+
+
 const char* noiseTypeNames[] = {
 	"Perlin",
 	"Simplex",
@@ -16,55 +19,58 @@ const char* noiseTypeNames[] = {
 
 void NoiseGenerator::DrawImGui()
 {
+	m_ValueChanged = false;
 	if (ImGui::CollapsingHeader("NoiseMap"), ImGuiTreeNodeFlags_DefaultOpen)
-	{
-		bool valueChanged = false;
+	{		
 
-		valueChanged |= ImGui::DragInt2("Map size", reinterpret_cast<int*>(&m_MapSize),1.f,64,INT_MAX);
-		if (valueChanged)
+		m_ValueChanged |= ImGui::DragInt2("Map size", reinterpret_cast<int*>(&m_MapSize),1.f,64,INT_MAX);
+		if (m_ValueChanged)
 		{
 			if (m_MapSize.x < 64) m_MapSize.x = 64;
 			if (m_MapSize.y < 64) m_MapSize.y = 64;
 		}
 	
-		valueChanged |= ImGui::DragFloat("Scale", reinterpret_cast<float*>(&m_Scale));
-		valueChanged |= ImGui::DragInt2("Offset", reinterpret_cast<int*>(&m_Offset));
-
-		
+		m_ValueChanged |= ImGui::DragFloat("Scale", reinterpret_cast<float*>(&m_Scale));
+		m_ValueChanged |= ImGui::DragInt2("Offset", reinterpret_cast<int*>(&m_Offset));
 
 		int currentNoiseTypeIndex = static_cast<int>(M_NoiseType);
 
 		if (ImGui::Combo("Noise Type", &currentNoiseTypeIndex, noiseTypeNames, IM_ARRAYSIZE(noiseTypeNames)))
 		{
-			valueChanged |= true;
+			m_ValueChanged |= true;
 			M_NoiseType = static_cast<NoiseType>(currentNoiseTypeIndex);
 		}
 
-		valueChanged |= ImGui::DragInt("Seed", reinterpret_cast<int*>(&m_Seed));
+		m_ValueChanged |= ImGui::DragInt("Seed", reinterpret_cast<int*>(&m_Seed));
 
-		valueChanged |= ImGui::DragInt("Octaves", reinterpret_cast<int*>(&m_Octaves),1.f,0, INT_MAX);
-		if (valueChanged)
+		m_ValueChanged |= ImGui::DragInt("Octaves", reinterpret_cast<int*>(&m_Octaves),1.f,0, INT_MAX);
+		if (m_ValueChanged)
 		{
 			if (m_Octaves < 0) m_Octaves = 0;
 			
 		}
 
-		valueChanged |= ImGui::DragFloat("Gain", reinterpret_cast<float*>(&m_Gain),0.01f);
-		valueChanged |= ImGui::DragFloat("Lacunarity", reinterpret_cast<float*>(&m_Lacunarity), 0.01f);
+		m_ValueChanged |= ImGui::DragFloat("Gain", reinterpret_cast<float*>(&m_Gain),0.01f);
+		m_ValueChanged |= ImGui::DragFloat("Lacunarity", reinterpret_cast<float*>(&m_Lacunarity), 0.01f);
 			
 
-		valueChanged |= ImGui::Checkbox("Auto generate on change", &m_AutoGen);
-		if (ImGui::Button("generate noise map")|| (valueChanged&& m_AutoGen))
+		m_ValueChanged |= ImGui::Checkbox("Auto generate noise map on change", &m_AutoGen);
+		if (ImGui::Button("generate noise map")|| (m_ValueChanged && m_AutoGen))
 		{			
-			auto noiseMap = GenerateNoiseMap(m_MapSize.x, m_MapSize.y);
-			auto divice = SceneManager::Get()->GetActiveSceneContext().d3dContext.pDevice;
-			m_TextureVieuw = CreateTextureFromImage(divice);
+			Generate();
 		}
 		if (m_TextureVieuw)
 		{
 			ImGui::Image((void*)m_TextureVieuw.Get(), ImVec2(static_cast<float>(256), static_cast<float>(256)));
 		}
 	}
+}
+
+void NoiseGenerator::Generate()
+{
+	auto noiseMap = GenerateNoiseMap(m_MapSize.x, m_MapSize.y);
+	auto divice = SceneManager::Get()->GetActiveSceneContext().d3dContext.pDevice;
+	m_TextureVieuw = CreateTextureFromImage(divice);
 }
 
 std::vector<float> NoiseGenerator::GenerateNoiseMap(int width, int height)

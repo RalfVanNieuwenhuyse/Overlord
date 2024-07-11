@@ -7,7 +7,7 @@
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
 
-#include "noise/NoiseGenerator.h"
+#include "noise/TerrainGenrerator.h"
 
 class CubePrefab;
 
@@ -30,7 +30,7 @@ protected:
 
 private:
 	CubePrefab* m_pCube{ nullptr };
-	NoiseGenerator m_NoiseMapGen;
+	TerrainGenrerator m_TerrainGen;
 
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_textureView;
 	int m_width = 256;
