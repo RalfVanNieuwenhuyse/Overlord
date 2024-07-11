@@ -32,6 +32,8 @@ private:
 
 	GameObject* m_Terrain;
 	MeshIndexedDrawComponent* m_Mesh;
+	XMFLOAT3 m_Scale{ 1, 1, 1 };
+
 
 	bool m_ValueChanged{ false };
 };

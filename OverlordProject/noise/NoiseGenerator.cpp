@@ -20,7 +20,7 @@ const char* noiseTypeNames[] = {
 void NoiseGenerator::DrawImGui()
 {
 	m_ValueChanged = false;
-	if (ImGui::CollapsingHeader("NoiseMap"), ImGuiTreeNodeFlags_DefaultOpen)
+	if (ImGui::CollapsingHeader("NoiseMap"), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)
 	{		
 
 		m_ValueChanged |= ImGui::DragInt2("Map size", reinterpret_cast<int*>(&m_MapSize),1.f,64,INT_MAX);
@@ -115,6 +115,12 @@ std::vector<float> NoiseGenerator::GenerateNoiseMap(int width, int height)
 	std::vector<float> noise(width * height);
 
 	fractal->GenUniformGrid2D(noise.data(), m_Offset.x, m_Offset.y, width, height, 1.f/ m_Scale, m_Seed);
+
+	// Scale the values from [-1, 1] to [0, 1]
+	for (auto& value : noise)
+	{
+		value = (value + 1.0f) / 2.0f;
+	}
 
 	m_NoiseMap = noise;
 	m_width = width;

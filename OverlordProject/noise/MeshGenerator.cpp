@@ -4,8 +4,7 @@
 
 #include <execution>
 #include <vector>
-#include <numeric> // For std::iota
-#include <mutex>
+#include <algorithm>
 
 #include "ImGui_Curve.h"
 
@@ -21,13 +20,16 @@ MeshGenerator::MeshGenerator()
 bool MeshGenerator::DrawImGui()
 {
     m_ValueChanged = false;
-    if (ImGui::CollapsingHeader("Mesh"), ImGuiTreeNodeFlags_DefaultOpen)
+    if (ImGui::CollapsingHeader("Mesh"), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)
     {        
 
         m_ValueChanged |= ImGui::DragFloat("Height modifier", reinterpret_cast<float*>(&m_HeightModifier));
         m_ValueChanged |= static_cast<bool>(ImGui::Bezier("easeInExpo", m_HeightCurve));
 
         m_ValueChanged |= ImGui::Checkbox("Auto generate mesh on change", &m_AutoGenMesh);
+
+        ImGui::DragFloat3("Scale mesh", reinterpret_cast<float*>(&m_Scale), 0.5f);
+        m_Terrain->GetTransform()->Scale(m_Scale);
 
         if (ImGui::Button("generate mesh") || (m_ValueChanged && m_AutoGenMesh))
         {
@@ -62,6 +64,7 @@ MeshIndexedDrawComponent* MeshGenerator::GenerateMesh(int width, int height, con
     
     m_Mesh = new MeshIndexedDrawComponent(vertCount, quadCount * 6);
 
+    XMFLOAT3 normal(0, 1, 0); // Placeholder normal
     // Vertices
     for (int z = 0; z < height; ++z)
     {
@@ -72,8 +75,7 @@ MeshIndexedDrawComponent* MeshGenerator::GenerateMesh(int width, int height, con
             const float curveHeight = ImGui::BezierValue(heightValue, m_HeightCurve);
             const float finalHeight = curveHeight * m_HeightModifier;
 
-            XMFLOAT3 pos(static_cast<float>(x), finalHeight, static_cast<float>(z));
-            XMFLOAT3 normal(0, 1, 0); // Placeholder normal
+            XMFLOAT3 pos(static_cast<float>(x), finalHeight, static_cast<float>(z));            
 
             m_Mesh->AddVertex(VertexPosNormCol(pos, normal, m_Color), false);
         }
@@ -112,7 +114,8 @@ MeshIndexedDrawComponent* MeshGenerator::GenerateMesh(int width, int height, con
 void MeshGenerator::Generate()
 {
     auto scene = SceneManager::Get()->GetActiveScene();
-    if (m_Terrain != nullptr)
+    
+    if (m_Terrain->GetScene() != nullptr)
     {
         scene->RemoveChild(m_Terrain, true);
     }
