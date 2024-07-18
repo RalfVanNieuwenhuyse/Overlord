@@ -5,6 +5,8 @@
 #include <execution>
 #include <vector>
 #include <algorithm>
+#include <future>
+#include <atomic>
 
 #include "ImGui_Curve.h"
 
@@ -65,42 +67,88 @@ MeshIndexedDrawComponent* MeshGenerator::GenerateMesh(int width, int height, con
     m_Mesh = new MeshIndexedDrawComponent(vertCount, quadCount * 6);
 
     XMFLOAT3 normal(0, 1, 0); // Placeholder normal
-    // Vertices
-    for (int z = 0; z < height; ++z)
-    {
-        for (int x = 0; x < width; ++x)
+    std::vector<VertexPosNormCol> tempVertices(vertCount);
+    std::vector<uint32_t> tempIndices(quadCount * 6);
+
+    // Populate vertices in parallel
+    auto vertexWorker = [&](int start, int end) {
+        for (int z = start; z < end; ++z)
         {
-            const int index = z * width + x;
-            const float heightValue = heightmap[index];
-            const float curveHeight = ImGui::BezierValue(heightValue, m_HeightCurve);
-            const float finalHeight = curveHeight * m_HeightModifier;
+            for (int x = 0; x < width; ++x)
+            {
+                const int index = z * width + x;
+                const float heightValue = heightmap[index];
+                const float curveHeight = ImGui::BezierValue(heightValue, m_HeightCurve);
+                const float finalHeight = curveHeight * m_HeightModifier;
 
-            XMFLOAT3 pos(static_cast<float>(x), finalHeight, static_cast<float>(z));            
-
-            m_Mesh->AddVertex(VertexPosNormCol(pos, normal, m_Color), false);
+                XMFLOAT3 pos(static_cast<float>(x), finalHeight, static_cast<float>(z));
+                tempVertices[index] = VertexPosNormCol(pos, normal, m_Color);
+            }
         }
+        };
+
+    // Populate indices in parallel
+    auto indexWorker = [&](int start, int end) {
+        for (int z = start; z < end; ++z)
+        {
+            for (int x = 0; x < width - 1; ++x)
+            {
+                const int v0 = z * width + x;
+                const int v1 = v0 + 1;
+                const int v2 = v0 + width;
+                const int v3 = v2 + 1;
+                const int index = (z * (width - 1) + x) * 6;
+
+                // First triangle
+                tempIndices[index] = v0;
+                tempIndices[index + 1] = v1;
+                tempIndices[index + 2] = v2;
+
+                // Second triangle
+                tempIndices[index + 3] = v2;
+                tempIndices[index + 4] = v1;
+                tempIndices[index + 5] = v3;
+            }
+        }
+        };
+
+    int numThreads = std::thread::hardware_concurrency();
+    int rowsPerThread = height / numThreads;
+    int startRow = 0;
+    std::vector<std::future<void>> futures;
+
+    // Launch vertex workers
+    for (int i = 0; i < numThreads; ++i)
+    {
+        int endRow = (i == numThreads - 1) ? height : startRow + rowsPerThread;
+        futures.emplace_back(std::async(std::launch::async, vertexWorker, startRow, endRow));
+        startRow = endRow;
     }
 
-    // Indices
-    for (int z = 0; z < height - 1; ++z)
+    // Launch index workers
+    startRow = 0;
+    for (int i = 0; i < numThreads; ++i)
     {
-        for (int x = 0; x < width - 1; ++x)
-        {
-            const int v0 = z * width + x;
-            const int v1 = v0 + 1;
-            const int v2 = v0 + width;
-            const int v3 = v2 + 1;
+        int endRow = (i == numThreads - 1) ? height - 1 : startRow + rowsPerThread;
+        futures.emplace_back(std::async(std::launch::async, indexWorker, startRow, endRow));
+        startRow = endRow;
+    }
 
-            // First triangle
-            m_Mesh->AddIndex(v0, false);
-            m_Mesh->AddIndex(v1, false);
-            m_Mesh->AddIndex(v2, false);
+    // Wait for all tasks to complete
+    for (auto& future : futures)
+    {
+        future.get();
+    }
 
-            // Second triangle
-            m_Mesh->AddIndex(v2, false);
-            m_Mesh->AddIndex(v1, false);
-            m_Mesh->AddIndex(v3, false);
-        }
+    // Add vertices and indices to the mesh
+    for (const auto& vertex : tempVertices)
+    {
+        m_Mesh->AddVertex(vertex, false);
+    }
+
+    for (const auto& index : tempIndices)
+    {
+        m_Mesh->AddIndex(index, false);
     }
 
     // Update buffers and generate normals
