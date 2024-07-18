@@ -6,10 +6,9 @@
 #include <imgui.h>
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
+#include <memory>
 
 #include "noise/TerrainGenrerator.h"
-
-class CubePrefab;
 
 class SummonTestScene : public GameScene
 {
@@ -29,10 +28,5 @@ protected:
 	void OnGUI() override;
 
 private:
-	CubePrefab* m_pCube{ nullptr };
-	TerrainGenrerator m_TerrainGen;
-
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> m_textureView;
-	int m_width = 256;
-	int m_height = 256;	
+	std::unique_ptr<TerrainGenrerator> m_TerrainGen;
 };

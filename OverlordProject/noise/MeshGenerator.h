@@ -1,9 +1,11 @@
 #pragma once
+#include <memory>
+
 class MeshGenerator
 {
 public:
 	MeshGenerator();
-	~MeshGenerator() = default;
+	~MeshGenerator();
 
 	MeshGenerator(const MeshGenerator& other) = delete;
 	MeshGenerator(MeshGenerator&& other) noexcept = delete;

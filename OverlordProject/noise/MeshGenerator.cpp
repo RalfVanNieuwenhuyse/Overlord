@@ -19,6 +19,10 @@ MeshGenerator::MeshGenerator()
     scene->AddChild(m_Terrain);*/
 }
 
+MeshGenerator::~MeshGenerator()
+{
+}
+
 bool MeshGenerator::DrawImGui()
 {
     m_ValueChanged = false;
@@ -58,12 +62,12 @@ MeshIndexedDrawComponent* MeshGenerator::GenerateMesh(int width, int height, con
         Logger::LogError(L"Heightmap is empty");
         return nullptr;
     }
-    
-    m_Mesh->ClearVertexList();
-    m_Mesh->ClearIndexList();
+
+    //m_Mesh->ClearVertexList();
+    //m_Mesh->ClearIndexList();
     const int vertCount = width * height;
     const int quadCount = (width - 1) * (height - 1);
-    
+
     m_Mesh = new MeshIndexedDrawComponent(vertCount, quadCount * 6);
 
     XMFLOAT3 normal(0, 1, 0); // Placeholder normal
@@ -72,44 +76,45 @@ MeshIndexedDrawComponent* MeshGenerator::GenerateMesh(int width, int height, con
 
     // Populate vertices in parallel
     auto vertexWorker = [&](int start, int end) {
-        for (int z = start; z < end; ++z)
-        {
-            for (int x = 0; x < width; ++x)
-            {
-                const int index = z * width + x;
+        std::for_each(std::execution::par_unseq, tempVertices.begin() + start * width, tempVertices.begin() + end * width,
+            [&](VertexPosNormCol& vertex) {
+                int index = static_cast<int>( & vertex - tempVertices.data()); // Calculate index based on pointer arithmetic
+                int z = index / width;
+                int x = index % width;
                 const float heightValue = heightmap[index];
                 const float curveHeight = ImGui::BezierValue(heightValue, m_HeightCurve);
                 const float finalHeight = curveHeight * m_HeightModifier;
 
                 XMFLOAT3 pos(static_cast<float>(x), finalHeight, static_cast<float>(z));
-                tempVertices[index] = VertexPosNormCol(pos, normal, m_Color);
-            }
-        }
+                vertex = VertexPosNormCol(pos, normal, m_Color);
+            });
         };
 
     // Populate indices in parallel
     auto indexWorker = [&](int start, int end) {
-        for (int z = start; z < end; ++z)
-        {
-            for (int x = 0; x < width - 1; ++x)
-            {
+        std::for_each(std::execution::par_unseq, tempIndices.begin() + start * (width - 1) * 6, tempIndices.begin() + end * (width - 1) * 6,
+            [&](uint32_t& index) {
+                int idx = static_cast<int>(&index - tempIndices.data()); // Calculate index based on pointer arithmetic
+                int quadIdx = idx / 6;
+                int x = quadIdx % (width - 1);
+                int z = quadIdx / (width - 1);
+
                 const int v0 = z * width + x;
                 const int v1 = v0 + 1;
                 const int v2 = v0 + width;
                 const int v3 = v2 + 1;
-                const int index = (z * (width - 1) + x) * 6;
+                const int indexBase = quadIdx * 6;
 
                 // First triangle
-                tempIndices[index] = v0;
-                tempIndices[index + 1] = v1;
-                tempIndices[index + 2] = v2;
+                tempIndices[indexBase] = v0;
+                tempIndices[indexBase + 1] = v1;
+                tempIndices[indexBase + 2] = v2;
 
                 // Second triangle
-                tempIndices[index + 3] = v2;
-                tempIndices[index + 4] = v1;
-                tempIndices[index + 5] = v3;
-            }
-        }
+                tempIndices[indexBase + 3] = v2;
+                tempIndices[indexBase + 4] = v1;
+                tempIndices[indexBase + 5] = v3;
+            });
         };
 
     int numThreads = std::thread::hardware_concurrency();
@@ -152,8 +157,6 @@ MeshIndexedDrawComponent* MeshGenerator::GenerateMesh(int width, int height, con
     }
 
     // Update buffers and generate normals
-    //pMesh->UpdateVertexBuffer();
-    //pMesh->UpdateIndexBuffer();
     m_Mesh->GenerateNormals();
 
     return m_Mesh;
@@ -163,11 +166,11 @@ void MeshGenerator::Generate()
 {
     auto scene = SceneManager::Get()->GetActiveScene();
     
-    if (m_Terrain->GetScene() != nullptr)
+    if (m_Terrain->GetScene() != nullptr || m_Terrain != nullptr )
     {
-        scene->RemoveChild(m_Terrain, true);
-    }
-
+        scene->RemoveChild(m_Terrain, true);        
+    }    
+    
     GenerateMesh(m_MapSize.x, m_MapSize.y, m_HeightMap);
     m_Terrain = new GameObject();
     m_Terrain->AddComponent(m_Mesh);

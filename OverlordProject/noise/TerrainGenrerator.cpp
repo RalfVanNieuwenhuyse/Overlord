@@ -6,8 +6,8 @@
 
 TerrainGenrerator::TerrainGenrerator()
 {
-	//m_NoiseGen;
-	//m_MeshGen;
+	m_NoiseGen = std::make_unique<NoiseGenerator>();
+	m_MeshGen = std::make_unique<MeshGenerator>();
 }
 
 void TerrainGenrerator::DrawImGui()
@@ -16,11 +16,11 @@ void TerrainGenrerator::DrawImGui()
 
 	if (ImGui::CollapsingHeader("Terrain generator"), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)
 	{
-		valueChanged |= m_NoiseGen.GetValueChanged();
-		valueChanged |= m_MeshGen.GetValueChanged();
+		valueChanged |= m_NoiseGen->GetValueChanged();
+		valueChanged |= m_MeshGen->GetValueChanged();
 
-		m_NoiseGen.DrawImGui();
-		m_MeshGen.DrawImGui();
+		m_NoiseGen->DrawImGui();
+		m_MeshGen->DrawImGui();
 
 
 		if (ImGui::CollapsingHeader("Generator"), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)
@@ -69,10 +69,10 @@ void TerrainGenrerator::DrawImGui()
 
 void TerrainGenrerator::GenerateTerrain()
 {
-	m_NoiseGen.Generate();
+	m_NoiseGen->Generate();
 
-	m_MeshGen.SetMapSize(m_NoiseGen.GetMapSize());
-	m_MeshGen.SetHeightMap(m_NoiseGen.GetNoiseMap());
+	m_MeshGen->SetMapSize(m_NoiseGen->GetMapSize());
+	m_MeshGen->SetHeightMap(m_NoiseGen->GetNoiseMap());
 
-	m_MeshGen.Generate();
+	m_MeshGen->Generate();
 }

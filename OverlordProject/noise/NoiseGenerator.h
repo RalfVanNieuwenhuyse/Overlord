@@ -16,7 +16,7 @@ class NoiseGenerator
 {	
 public:
 	NoiseGenerator() = default;
-	~NoiseGenerator() = default;
+	~NoiseGenerator();
 
 	NoiseGenerator(const NoiseGenerator& other) = delete;
 	NoiseGenerator(NoiseGenerator&& other) noexcept = delete;

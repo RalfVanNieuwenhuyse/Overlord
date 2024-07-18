@@ -1,7 +1,8 @@
 #pragma once
-//#include <memory>
+#include <memory>
 #include "noise/NoiseGenerator.h"
 #include "noise/MeshGenerator.h"
+
 
 //class MeshGenerator;
 //class NoiseGenerator;
@@ -19,18 +20,14 @@ public:
 
 	void DrawImGui();
 private:
-	NoiseGenerator m_NoiseGen;
-	MeshGenerator m_MeshGen;
 
+    std::unique_ptr <NoiseGenerator> m_NoiseGen;
+    std::unique_ptr <MeshGenerator> m_MeshGen;
 
-	//GameObject* m_Terrain;
 	bool m_AutoGenTerain{ false };
     int m_TimesToGenerate{10};
-
     float m_AverageTime = 0.0f;
-
 	void GenerateTerrain();
-
 };
 
 

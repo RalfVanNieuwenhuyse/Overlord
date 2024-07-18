@@ -17,6 +17,11 @@ const char* noiseTypeNames[] = {
 	"Value"
 };
 
+NoiseGenerator::~NoiseGenerator()
+{
+	m_TextureVieuw.ReleaseAndGetAddressOf();
+}
+
 void NoiseGenerator::DrawImGui()
 {
 	m_ValueChanged = false;
