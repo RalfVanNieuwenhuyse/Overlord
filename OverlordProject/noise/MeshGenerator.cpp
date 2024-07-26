@@ -17,10 +17,21 @@ MeshGenerator::MeshGenerator()
     m_Terrain->AddComponent(m_Mesh);
     /*auto scene = SceneManager::Get()->GetActiveScene();
     scene->AddChild(m_Terrain);*/
+    LoadSettings(m_SettingsFileName);
+
 }
 
 MeshGenerator::~MeshGenerator()
 {
+    SaveSettings(m_SettingsFileName);
+
+    auto scene = SceneManager::Get()->GetActiveScene();
+    m_Terrain->RemoveComponent(m_Mesh);
+
+    if(m_Terrain->GetScene() != nullptr) scene->RemoveChild(m_Terrain);
+   
+    delete m_Mesh;  
+    delete m_Terrain;    
 }
 
 bool MeshGenerator::DrawImGui()
@@ -37,9 +48,29 @@ bool MeshGenerator::DrawImGui()
         ImGui::DragFloat3("Scale mesh", reinterpret_cast<float*>(&m_Scale), 0.5f);
         m_Terrain->GetTransform()->Scale(m_Scale);
 
-        if (ImGui::Button("generate mesh") || (m_ValueChanged && m_AutoGenMesh))
+        if (!m_HeightMap.empty())
         {
-            Generate();
+            if (ImGui::Button("generate mesh") || (m_ValueChanged && m_AutoGenMesh))
+            {
+                Generate();
+            }
+        }        
+
+        if(m_HasGeneratedOnec)
+        {
+            const size_t bufferSize = 256;
+            std::vector<char> buffer(bufferSize);
+            strncpy_s(buffer.data(), buffer.size(), m_FileName.c_str(), _TRUNCATE);
+            bool edited = ImGui::InputText("File name", buffer.data(), buffer.size());
+            if (edited)
+            {
+                m_FileName = std::string(buffer.data());
+            }
+
+            if (ImGui::Button("Save to file"))
+            {
+                m_Mesh->SaveToObj(m_FileName);
+            }
         }
     }
     return m_ValueChanged;
@@ -62,9 +93,7 @@ MeshIndexedDrawComponent* MeshGenerator::GenerateMesh(int width, int height, con
         Logger::LogError(L"Heightmap is empty");
         return nullptr;
     }
-
-    //m_Mesh->ClearVertexList();
-    //m_Mesh->ClearIndexList();
+    
     const int vertCount = width * height;
     const int quadCount = (width - 1) * (height - 1);
 
@@ -121,6 +150,7 @@ MeshIndexedDrawComponent* MeshGenerator::GenerateMesh(int width, int height, con
     int rowsPerThread = height / numThreads;
     int startRow = 0;
     std::vector<std::future<void>> futures;
+    futures.reserve(numThreads);
 
     // Launch vertex workers
     for (int i = 0; i < numThreads; ++i)
@@ -129,7 +159,7 @@ MeshIndexedDrawComponent* MeshGenerator::GenerateMesh(int width, int height, con
         futures.emplace_back(std::async(std::launch::async, vertexWorker, startRow, endRow));
         startRow = endRow;
     }
-
+    
     // Launch index workers
     startRow = 0;
     for (int i = 0; i < numThreads; ++i)
@@ -164,15 +194,49 @@ MeshIndexedDrawComponent* MeshGenerator::GenerateMesh(int width, int height, con
 
 void MeshGenerator::Generate()
 {
+    m_HasGeneratedOnec = true;
     auto scene = SceneManager::Get()->GetActiveScene();
     
-    if (m_Terrain->GetScene() != nullptr || m_Terrain != nullptr )
+    if (m_Terrain->GetScene() != nullptr)
     {
-        scene->RemoveChild(m_Terrain, true);        
+        //auto scene = SceneManager::Get()->GetActiveScene();
+        scene->RemoveChild(m_Terrain);
     }    
+
+    m_Terrain->RemoveComponent(m_Mesh);
+    delete m_Mesh;
+    delete m_Terrain;
     
     GenerateMesh(m_MapSize.x, m_MapSize.y, m_HeightMap);
     m_Terrain = new GameObject();
     m_Terrain->AddComponent(m_Mesh);
     scene->AddChild(m_Terrain);
+}
+
+void MeshGenerator::LoadSettings(const std::string& filename)
+{
+    std::ifstream file(filename, std::ios::binary);
+    if (!file.is_open())
+        return; // Handle error
+
+    file.read(reinterpret_cast<char*>(&m_HeightModifier), sizeof(m_HeightModifier));
+    file.read(reinterpret_cast<char*>(&m_HeightCurve), sizeof(m_HeightCurve));
+    file.read(reinterpret_cast<char*>(&m_AutoGenMesh), sizeof(m_AutoGenMesh));
+    file.read(reinterpret_cast<char*>(&m_Scale), sizeof(m_Scale));
+
+    std::vector<char> buffer(256); // Adjust buffer size if necessary
+    file.read(buffer.data(), buffer.size());
+    m_FileName = std::string(buffer.data());
+}
+
+void MeshGenerator::SaveSettings(const std::string& filename)
+{
+    std::ofstream file(filename, std::ios::binary);
+    if (!file.is_open())
+        return; // Handle error
+    file.write(reinterpret_cast<const char*>(&m_HeightModifier), sizeof(m_HeightModifier));
+    file.write(reinterpret_cast<const char*>(&m_HeightCurve), sizeof(m_HeightCurve));
+    file.write(reinterpret_cast<const char*>(&m_AutoGenMesh), sizeof(m_AutoGenMesh));
+    file.write(reinterpret_cast<const char*>(&m_Scale), sizeof(m_Scale));
+    file.write(reinterpret_cast<const char*>(&m_FileName), m_FileName.size());
 }

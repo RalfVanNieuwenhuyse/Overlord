@@ -3,6 +3,7 @@
 
 
 #include "OverlordAPI.h"
+#include <fstream>
 
 //#include "ImGui_Curve.h"
 
@@ -17,8 +18,14 @@ const char* noiseTypeNames[] = {
 	"Value"
 };
 
+NoiseGenerator::NoiseGenerator()
+{
+	LoadSettings(m_SettingsFileName);
+}
+
 NoiseGenerator::~NoiseGenerator()
 {
+	SaveSettings(m_SettingsFileName);
 	m_TextureVieuw.ReleaseAndGetAddressOf();
 }
 
@@ -61,7 +68,8 @@ void NoiseGenerator::DrawImGui()
 
 		m_ValueChanged |= ImGui::Checkbox("Auto generate noise map on change", &m_AutoGen);
 		if (ImGui::Button("generate noise map")|| (m_ValueChanged && m_AutoGen))
-		{			
+		{	
+			m_ValueChanged |= true;
 			Generate();
 		}
 		if (m_TextureVieuw)
@@ -183,4 +191,38 @@ std::vector<uint8_t> NoiseGenerator::ConvertNoiseMapToImage(const std::vector<fl
 		mapimage[i] = static_cast<uint8_t>(noiseMap[i] * 255);
 	}
 	return mapimage;	
+}
+
+void NoiseGenerator::LoadSettings(const std::string& filename)
+{
+	std::ifstream file(filename, std::ios::binary);
+	if (!file.is_open())
+		return; // Handle error
+
+	file.read(reinterpret_cast<char*>(&m_MapSize), sizeof(m_MapSize));
+	file.read(reinterpret_cast<char*>(&m_Scale), sizeof(m_Scale));
+	file.read(reinterpret_cast<char*>(&m_Offset), sizeof(m_Offset));
+	file.read(reinterpret_cast<char*>(&M_NoiseType), sizeof(M_NoiseType));
+	file.read(reinterpret_cast<char*>(&m_Seed), sizeof(m_Seed));
+	file.read(reinterpret_cast<char*>(&m_Octaves), sizeof(m_Octaves));
+	file.read(reinterpret_cast<char*>(&m_Gain), sizeof(m_Gain));
+	file.read(reinterpret_cast<char*>(&m_Lacunarity), sizeof(m_Lacunarity));
+	file.read(reinterpret_cast<char*>(&m_AutoGen), sizeof(m_AutoGen));
+}
+
+void NoiseGenerator::SaveSettings(const std::string& filename)
+{
+	std::ofstream file(filename, std::ios::binary);
+	if (!file.is_open())
+		return; // Handle error
+
+	file.write(reinterpret_cast<const char*>(&m_MapSize), sizeof(m_MapSize));
+	file.write(reinterpret_cast<const char*>(&m_Scale), sizeof(m_Scale));
+	file.write(reinterpret_cast<const char*>(&m_Offset), sizeof(m_Offset));
+	file.write(reinterpret_cast<const char*>(&M_NoiseType), sizeof(M_NoiseType));
+	file.write(reinterpret_cast<const char*>(&m_Seed), sizeof(m_Seed));
+	file.write(reinterpret_cast<const char*>(&m_Octaves), sizeof(m_Octaves));
+	file.write(reinterpret_cast<const char*>(&m_Gain), sizeof(m_Gain));
+	file.write(reinterpret_cast<const char*>(&m_Lacunarity), sizeof(m_Lacunarity));
+	file.write(reinterpret_cast<const char*>(&m_AutoGen), sizeof(m_AutoGen));
 }

@@ -22,6 +22,9 @@ public:
 
 	void Generate();
 
+	void LoadSettings(const std::string& filename);
+	void SaveSettings(const std::string& filename);
+
 private:
 	float m_HeightModifier{10.f};
 	float m_HeightCurve[5] = { 0.950f, 0.050f, 0.795f, 0.035f };
@@ -38,5 +41,10 @@ private:
 
 
 	bool m_ValueChanged{ false };
-};
 
+	bool m_HasGeneratedOnec{ false };
+	std::string m_FileName{"Terrain"};
+
+	std::string m_SettingsFileName{ "MeshSettings.bin" };
+
+};

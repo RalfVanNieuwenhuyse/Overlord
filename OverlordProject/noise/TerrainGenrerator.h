@@ -28,6 +28,7 @@ private:
     int m_TimesToGenerate{10};
     float m_AverageTime = 0.0f;
 	void GenerateTerrain();
+    void SaveTiming(float averageTime);
 };
 
 

@@ -15,7 +15,7 @@
 class NoiseGenerator
 {	
 public:
-	NoiseGenerator() = default;
+	NoiseGenerator();
 	~NoiseGenerator();
 
 	NoiseGenerator(const NoiseGenerator& other) = delete;
@@ -34,6 +34,10 @@ public:
 
 	std::vector<float> GenerateNoiseMap(int width, int height);
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> CreateTextureFromImage(ID3D11Device* device);
+
+	void LoadSettings(const std::string& filename);
+	void SaveSettings(const std::string& filename);
+
 
 	enum class NoiseType
 	{
@@ -66,5 +70,7 @@ private:
 	bool m_ValueChanged{false};
 
 	std::vector<uint8_t> ConvertNoiseMapToImage(const std::vector<float>& noiseMap);
+
+	std::string m_SettingsFileName{"NoiseSettings.bin"};
 };
 

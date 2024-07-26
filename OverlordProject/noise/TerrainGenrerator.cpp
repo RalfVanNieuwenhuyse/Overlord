@@ -4,6 +4,11 @@
 #include <thread>
 #include <atomic>
 
+#include <fstream>
+#include <iomanip> // For std::put_time
+#include <chrono> // For std::chrono
+#include <iostream> // For std::cerr
+
 TerrainGenrerator::TerrainGenrerator()
 {
 	m_NoiseGen = std::make_unique<NoiseGenerator>();
@@ -17,6 +22,13 @@ void TerrainGenrerator::DrawImGui()
 	if (ImGui::CollapsingHeader("Terrain generator"), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)
 	{
 		valueChanged |= m_NoiseGen->GetValueChanged();
+
+		if (valueChanged && !m_NoiseGen->GetNoiseMap().empty())
+		{
+			m_MeshGen->SetMapSize(m_NoiseGen->GetMapSize());
+			m_MeshGen->SetHeightMap(m_NoiseGen->GetNoiseMap());
+		}
+
 		valueChanged |= m_MeshGen->GetValueChanged();
 
 		m_NoiseGen->DrawImGui();
@@ -35,6 +47,7 @@ void TerrainGenrerator::DrawImGui()
 				time.Start();
 				GenerateTerrain();
 				m_AverageTime = time.Endms();
+				SaveTiming(m_AverageTime);
 			}
 
 			ImGui::DragInt("Times to generate", &m_TimesToGenerate, 1.f, 2, INT_MAX);
@@ -60,6 +73,7 @@ void TerrainGenrerator::DrawImGui()
 					time.Endms();
 				}
 				m_AverageTime = time.AverageTimings();
+				SaveTiming(m_AverageTime);
 			}
 
 			ImGui::Text("Average Time: %.3f ms", m_AverageTime);
@@ -75,4 +89,24 @@ void TerrainGenrerator::GenerateTerrain()
 	m_MeshGen->SetHeightMap(m_NoiseGen->GetNoiseMap());
 
 	m_MeshGen->Generate();
+}
+
+void TerrainGenrerator::SaveTiming(float averageTime)
+{
+	std::ofstream outFile("timings.txt", std::ios_base::app);
+	if (outFile.is_open())
+	{
+		auto now = std::chrono::system_clock::now();
+		auto now_c = std::chrono::system_clock::to_time_t(now);
+
+		struct tm buf;
+		localtime_s(&buf, &now_c);
+
+		outFile << "Generated at " << std::put_time(&buf, "%F %T") << " - Time: " << averageTime << " ms\n";
+		outFile.close();
+	}
+	else
+	{
+		std::cerr << "Unable to open file for writing timings\n";
+	}
 }
