@@ -21,6 +21,7 @@ public:
 	void UpdateVertexBuffer();
 	void UpdateIndexBuffer();
 	void GenerateNormals();
+	void SaveToObj(const std::string& filename);
 
 protected:
 

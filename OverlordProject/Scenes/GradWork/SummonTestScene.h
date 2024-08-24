@@ -1,6 +1,15 @@
 #pragma once
+#include <vector>
+#include <cstdint>
+#include <d3d11.h>
+#include <wrl/client.h>
+#include <imgui.h>
+#include <imgui_impl_dx11.h>
+#include <imgui_impl_win32.h>
+#include <memory>
 
-class CubePrefab;
+#include "noise/TerrainGenrerator.h"
+
 class SummonTestScene : public GameScene
 {
 public:
@@ -19,6 +28,5 @@ protected:
 	void OnGUI() override;
 
 private:
-	CubePrefab* m_pCube{ nullptr };
-
+	std::unique_ptr<TerrainGenrerator> m_TerrainGen;
 };

@@ -1,6 +1,11 @@
 #include "stdafx.h"
 #include "MeshIndexedDrawComponent.h"
 
+#include <fstream>
+#include <thread>
+#include <sstream>
+#include <future>
+
 ID3DX11EffectMatrixVariable* MeshIndexedDrawComponent::m_pWorldVar = nullptr;
 ID3DX11EffectMatrixVariable* MeshIndexedDrawComponent::m_pWvpVar = nullptr;
 
@@ -239,4 +244,77 @@ void MeshIndexedDrawComponent::ClearVertexList()
 void MeshIndexedDrawComponent::ClearIndexList()
 {
 	m_vecIndices.clear();
+}
+
+void MeshIndexedDrawComponent::SaveToObj(const std::string& filename)
+{
+	std::string completeFileName = filename + ".obj";
+	std::ofstream objFile(completeFileName);
+	if (!objFile.is_open())
+	{
+		Logger::LogError(L"Failed to open file for writing: " + std::wstring(filename.begin(), filename.end()));
+		return;
+	}
+	objFile.close();
+
+	// Lambda function to gather vertex positions
+	auto gatherVertices = [&]() -> std::string
+		{
+			std::ostringstream oss;
+			for (const auto& vertex : m_vecVertices)
+			{
+				oss << "v " << vertex.Position.x << " " << vertex.Position.y << " " << vertex.Position.z << "\n";
+			}
+			return oss.str();
+		};
+
+	// Lambda function to gather vertex normals
+	auto gatherNormals = [&]() -> std::string
+		{
+			std::ostringstream oss;
+			for (const auto& vertex : m_vecVertices)
+			{
+				oss << "vn " << vertex.Normal.x << " " << vertex.Normal.y << " " << vertex.Normal.z << "\n";
+			}
+			return oss.str();
+		};
+
+	// Lambda function to gather faces (indices)
+	auto gatherFaces = [&]() -> std::string
+		{
+			std::ostringstream oss;
+			for (size_t i = 0; i < m_vecIndices.size(); i += 3)
+			{
+				oss << "f "
+					<< m_vecIndices[i] + 1 << "//" << m_vecIndices[i] + 1 << " "
+					<< m_vecIndices[i + 1] + 1 << "//" << m_vecIndices[i + 1] + 1 << " "
+					<< m_vecIndices[i + 2] + 1 << "//" << m_vecIndices[i + 2] + 1 << "\n";
+			}
+			return oss.str();
+		};
+
+	// Launch threads to gather data
+	std::future<std::string> vertexFuture = std::async(std::launch::async, gatherVertices);
+	std::future<std::string> normalFuture = std::async(std::launch::async, gatherNormals);
+	std::future<std::string> faceFuture = std::async(std::launch::async, gatherFaces);
+
+	// Get the results from the threads
+	std::string vertexData = vertexFuture.get();
+	std::string normalData = normalFuture.get();
+	std::string faceData = faceFuture.get();
+
+	// Open the file again for writing
+	objFile.open(completeFileName);
+	if (!objFile.is_open())
+	{
+		Logger::LogError(L"Failed to open file for writing: " + std::wstring(filename.begin(), filename.end()));
+		return;
+	}
+
+	// Write the gathered data to the file
+	objFile << vertexData;
+	objFile << normalData;
+	objFile << faceData;
+
+	objFile.close();
 }
