@@ -41,8 +41,6 @@ void TerrainGenrerator::DrawImGui()
 
 			if (ImGui::Button("generate Terrain") || (valueChanged && m_AutoGenTerain))
 			{
-				/*m_GenerationInProgress = true;
-				std::thread(&TerrainGenrerator::GenerateTerrain, this).detach();*/
 				Timer time;
 				time.Start();
 				GenerateTerrain();
@@ -102,11 +100,28 @@ void TerrainGenrerator::SaveTiming(float averageTime)
 		struct tm buf;
 		localtime_s(&buf, &now_c);
 
-		outFile << "Generated at " << std::put_time(&buf, "%F %T") << " - Time: " << averageTime << " ms\n";
+		outFile << "Generated at " << std::put_time(&buf, "%F %T")
+			<< " - Noise Type: " << NoiseTypeToString(m_NoiseGen->GetNoiseType())
+			<< " - Time: " << averageTime << " ms\n";
 		outFile.close();
 	}
 	else
 	{
 		std::cerr << "Unable to open file for writing timings\n";
+	}
+}
+
+std::string TerrainGenrerator::NoiseTypeToString(NoiseGenerator::NoiseType type)
+{
+	switch (type)
+	{
+	case NoiseGenerator::NoiseType::Perlin: return "Perlin";
+	case NoiseGenerator::NoiseType::Simplex: return "Simplex";
+	case NoiseGenerator::NoiseType::OpenSimplex2: return "OpenSimplex2";
+	case NoiseGenerator::NoiseType::OpenSimplex2S: return "OpenSimplex2S";
+	case NoiseGenerator::NoiseType::CellularDistance: return "CellularDistance";
+	case NoiseGenerator::NoiseType::CellularValue: return "CellularValue";
+	case NoiseGenerator::NoiseType::Value: return "Value";
+	default: return "Unknown";
 	}
 }

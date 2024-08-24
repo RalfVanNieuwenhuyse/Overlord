@@ -47,4 +47,7 @@ private:
 
 	std::string m_SettingsFileName{ "MeshSettings.bin" };
 
+	std::vector<float> m_FinalHeightMap;
+	float m_SurfaceRoughness{};
+
 };

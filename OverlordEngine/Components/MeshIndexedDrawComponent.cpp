@@ -255,8 +255,6 @@ void MeshIndexedDrawComponent::SaveToObj(const std::string& filename)
 		Logger::LogError(L"Failed to open file for writing: " + std::wstring(filename.begin(), filename.end()));
 		return;
 	}
-
-	// Close the file immediately after checking if it's open
 	objFile.close();
 
 	// Lambda function to gather vertex positions

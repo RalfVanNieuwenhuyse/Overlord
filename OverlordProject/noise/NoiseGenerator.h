@@ -50,6 +50,8 @@ public:
 		Value
 	};
 
+	NoiseType GetNoiseType() { return M_NoiseType; };
+
 private:
 	bool m_AutoGen{false};
 	std::vector<float> m_NoiseMap;
@@ -70,6 +72,7 @@ private:
 	bool m_ValueChanged{false};
 
 	std::vector<uint8_t> ConvertNoiseMapToImage(const std::vector<float>& noiseMap);
+	std::vector<uint8_t> ConvertNoiseMapToImageRGBA(const std::vector<float>& noiseMap);
 
 	std::string m_SettingsFileName{"NoiseSettings.bin"};
 };

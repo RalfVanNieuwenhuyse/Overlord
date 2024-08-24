@@ -15,10 +15,8 @@ MeshGenerator::MeshGenerator()
     m_Terrain = new GameObject();
     m_Mesh = new MeshIndexedDrawComponent(1024*1024, 1024*1024 * 6);
     m_Terrain->AddComponent(m_Mesh);
-    /*auto scene = SceneManager::Get()->GetActiveScene();
-    scene->AddChild(m_Terrain);*/
+    
     LoadSettings(m_SettingsFileName);
-
 }
 
 MeshGenerator::~MeshGenerator()
@@ -40,7 +38,7 @@ bool MeshGenerator::DrawImGui()
     if (ImGui::CollapsingHeader("Mesh"), ImGuiTreeNodeFlags_DefaultOpen | ImGuiTreeNodeFlags_Framed)
     {        
 
-        m_ValueChanged |= ImGui::DragFloat("Height modifier", reinterpret_cast<float*>(&m_HeightModifier));
+        m_ValueChanged |= ImGui::DragFloat("Height modifier", static_cast<float*>(&m_HeightModifier));
         m_ValueChanged |= static_cast<bool>(ImGui::Bezier("easeInExpo", m_HeightCurve));
 
         m_ValueChanged |= ImGui::Checkbox("Auto generate mesh on change", &m_AutoGenMesh);
@@ -71,6 +69,8 @@ bool MeshGenerator::DrawImGui()
             {
                 m_Mesh->SaveToObj(m_FileName);
             }
+
+            ImGui::Text("Surface Roughness: %.10g", m_SurfaceRoughness);
         }
     }
     return m_ValueChanged;
@@ -78,6 +78,8 @@ bool MeshGenerator::DrawImGui()
 
 MeshIndexedDrawComponent* MeshGenerator::GenerateMesh(int width, int height, const std::vector<float>& heightmap)
 {
+    m_FinalHeightMap.clear();
+
     if (width <= 0)
     {
         Logger::LogError(L"Width is 0");
@@ -103,6 +105,8 @@ MeshIndexedDrawComponent* MeshGenerator::GenerateMesh(int width, int height, con
     std::vector<VertexPosNormCol> tempVertices(vertCount);
     std::vector<uint32_t> tempIndices(quadCount * 6);
 
+    std::mutex mtx;
+
     // Populate vertices in parallel
     auto vertexWorker = [&](int start, int end) {
         std::for_each(std::execution::par_unseq, tempVertices.begin() + start * width, tempVertices.begin() + end * width,
@@ -116,6 +120,11 @@ MeshIndexedDrawComponent* MeshGenerator::GenerateMesh(int width, int height, con
 
                 XMFLOAT3 pos(static_cast<float>(x), finalHeight, static_cast<float>(z));
                 vertex = VertexPosNormCol(pos, normal, m_Color);
+
+                {
+                    std::lock_guard<std::mutex> lock(mtx);
+                    m_FinalHeightMap.push_back(finalHeight); // Thread-safe access
+                }
             });
         };
 
@@ -186,8 +195,18 @@ MeshIndexedDrawComponent* MeshGenerator::GenerateMesh(int width, int height, con
         m_Mesh->AddIndex(index, false);
     }
 
-    // Update buffers and generate normals
+    //generate normals
     m_Mesh->GenerateNormals();
+    
+    //SR
+    float mean = std::accumulate(m_FinalHeightMap.begin(), m_FinalHeightMap.end(), 0.0f) / m_FinalHeightMap.size();
+    float sumOfSquaredDifferences = 0.0f;
+    for (float val : m_FinalHeightMap)
+    {
+        sumOfSquaredDifferences += std::powf(val - mean, 2);
+    }    
+    float variance = sumOfSquaredDifferences / m_FinalHeightMap.size();
+    m_SurfaceRoughness = std::sqrt(variance);
 
     return m_Mesh;
 }
@@ -199,7 +218,6 @@ void MeshGenerator::Generate()
     
     if (m_Terrain->GetScene() != nullptr)
     {
-        //auto scene = SceneManager::Get()->GetActiveScene();
         scene->RemoveChild(m_Terrain);
     }    
 
@@ -217,7 +235,10 @@ void MeshGenerator::LoadSettings(const std::string& filename)
 {
     std::ifstream file(filename, std::ios::binary);
     if (!file.is_open())
-        return; // Handle error
+    {
+        Logger::LogError(L"Settings file not open");
+        return;
+    }        
 
     file.read(reinterpret_cast<char*>(&m_HeightModifier), sizeof(m_HeightModifier));
     file.read(reinterpret_cast<char*>(&m_HeightCurve), sizeof(m_HeightCurve));
@@ -233,7 +254,10 @@ void MeshGenerator::SaveSettings(const std::string& filename)
 {
     std::ofstream file(filename, std::ios::binary);
     if (!file.is_open())
-        return; // Handle error
+    {
+        Logger::LogError(L"Settings file not open");
+        return;
+    }
     file.write(reinterpret_cast<const char*>(&m_HeightModifier), sizeof(m_HeightModifier));
     file.write(reinterpret_cast<const char*>(&m_HeightCurve), sizeof(m_HeightCurve));
     file.write(reinterpret_cast<const char*>(&m_AutoGenMesh), sizeof(m_AutoGenMesh));

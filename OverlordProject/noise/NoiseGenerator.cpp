@@ -144,26 +144,32 @@ std::vector<float> NoiseGenerator::GenerateNoiseMap(int width, int height)
 
 Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> NoiseGenerator::CreateTextureFromImage(ID3D11Device* device)
 {
-	auto image = ConvertNoiseMapToImage(m_NoiseMap);
+	auto image = ConvertNoiseMapToImageRGBA(m_NoiseMap);//rgba for greyscale
+	//auto image = ConvertNoiseMapToImage(m_NoiseMap);//redscale
 
 	D3D11_TEXTURE2D_DESC desc = {};
 	desc.Width = m_MapSize.x;
 	desc.Height = m_MapSize.y;
 	desc.MipLevels = 1;
 	desc.ArraySize = 1;
-	desc.Format = DXGI_FORMAT_R8_UNORM; // 8-bit single-channel format for grayscale
+	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //rgba for greyscale
+	//desc.Format = DXGI_FORMAT_R8_UNORM; // 8-bit single-channel format for redScale
 	desc.SampleDesc.Count = 1;
 	desc.Usage = D3D11_USAGE_DEFAULT;
 	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
 
 	D3D11_SUBRESOURCE_DATA initData = {};
 	initData.pSysMem = image.data();
-	initData.SysMemPitch = m_MapSize.x * sizeof(uint8_t);
+	initData.SysMemPitch = m_MapSize.x * 4 * sizeof(uint8_t);//rgba for greyscale
+	//initData.SysMemPitch = m_MapSize.x * sizeof(uint8_t); //redscale
+
 
 	Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
 	HRESULT hr = device->CreateTexture2D(&desc, &initData, &texture);
 	if (FAILED(hr))
 	{
+		// Add logging or error handling here
+		OutputDebugStringA("Failed to create texture\n");
 		return nullptr;
 	}
 
@@ -176,7 +182,9 @@ Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> NoiseGenerator::CreateTextureFr
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> maptextureView;
 	hr = device->CreateShaderResourceView(texture.Get(), &srvDesc, &maptextureView);
 	if (FAILED(hr))
-	{			
+	{
+		// Add logging or error handling here
+		OutputDebugStringA("Failed to create shader resource view\n");
 		return nullptr;
 	}
 
@@ -193,11 +201,27 @@ std::vector<uint8_t> NoiseGenerator::ConvertNoiseMapToImage(const std::vector<fl
 	return mapimage;	
 }
 
+std::vector<uint8_t> NoiseGenerator::ConvertNoiseMapToImageRGBA(const std::vector<float>& noiseMap)
+{
+	std::vector<uint8_t> mapimage(noiseMap.size() * 4);
+	for (size_t i = 0; i < noiseMap.size(); ++i) {
+		uint8_t value = static_cast<uint8_t>(noiseMap[i] * 255);
+		mapimage[i * 4] = value;
+		mapimage[i * 4 + 1] = value;
+		mapimage[i * 4 + 2] = value;
+		mapimage[i * 4 + 3] = 255;
+	}
+	return mapimage;
+}
+
 void NoiseGenerator::LoadSettings(const std::string& filename)
 {
 	std::ifstream file(filename, std::ios::binary);
 	if (!file.is_open())
-		return; // Handle error
+	{
+		Logger::LogError(L"Settings file not open");
+		return;
+	}
 
 	file.read(reinterpret_cast<char*>(&m_MapSize), sizeof(m_MapSize));
 	file.read(reinterpret_cast<char*>(&m_Scale), sizeof(m_Scale));
@@ -214,7 +238,10 @@ void NoiseGenerator::SaveSettings(const std::string& filename)
 {
 	std::ofstream file(filename, std::ios::binary);
 	if (!file.is_open())
-		return; // Handle error
+    {
+        Logger::LogError(L"Settings file not open");
+        return;
+    } 
 
 	file.write(reinterpret_cast<const char*>(&m_MapSize), sizeof(m_MapSize));
 	file.write(reinterpret_cast<const char*>(&m_Scale), sizeof(m_Scale));
