@@ -56,7 +56,7 @@
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)OverlordEngine;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)3rdParty\FastNoise2\include;$(SolutionDir)OverlordEngine;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -64,11 +64,12 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)3rdParty\FastNoise2\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalOptions>/ignore:4099 %(AdditionalOptions)</AdditionalOptions>
       <Profile>
       </Profile>
       <IgnoreSpecificDefaultLibraries>libcpmtd.lib;libcmtd.lib</IgnoreSpecificDefaultLibraries>
+      <AdditionalDependencies>FastNoise.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
   </ItemDefinitionGroup>
@@ -80,7 +81,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)OverlordEngine;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)3rdParty\FastNoise2\include;$(SolutionDir)OverlordEngine;$(ProjectDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWarningAsError>true</TreatWarningAsError>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -91,6 +92,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <IgnoreSpecificDefaultLibraries>libcpmt.lib;libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <AdditionalLibraryDirectories>$(SolutionDir)3rdParty\FastNoise2\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>FastNoise.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
   </ItemDefinitionGroup>
@@ -100,6 +103,8 @@
     <ClCompile Include="Materials\Game\FlowingWater.cpp" />
     <ClCompile Include="Materials\Game\Post\PostUnderwater.cpp" />
     <ClCompile Include="Materials\Game\SkyboxMaterial.cpp" />
+    <ClCompile Include="noise\MeshGenerator.cpp" />
+    <ClCompile Include="noise\NoiseGenerator.cpp" />
     <ClCompile Include="Prefabs\Button.cpp" />
     <ClCompile Include="Prefabs\Coin.cpp" />
     <ClCompile Include="Prefabs\Door.cpp" />
@@ -151,6 +156,7 @@
     <ClCompile Include="Scenes\Week 4\UberMaterialScene.cpp" />
     <ClCompile Include="Materials\UberMaterial.cpp" />
     <ClCompile Include="Scenes\GradWork\SummonTestScene.cpp" />
+    <ClCompile Include="noise\TerrainGenrerator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\OverlordEngine\OverlordEngine.vcxproj">
@@ -158,11 +164,14 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ImGui_Curve.h" />
     <ClInclude Include="Materials\Game\EntityMaterial.h" />
     <ClInclude Include="Materials\Game\EntityMaterial_Skinned.h" />
     <ClInclude Include="Materials\Game\FlowingWater.h" />
     <ClInclude Include="Materials\Game\Post\PostUnderwater.h" />
     <ClInclude Include="Materials\Game\SkyboxMaterial.h" />
+    <ClInclude Include="noise\MeshGenerator.h" />
+    <ClInclude Include="noise\NoiseGenerator.h" />
     <ClInclude Include="Prefabs\Button.h" />
     <ClInclude Include="Prefabs\Coin.h" />
     <ClInclude Include="Prefabs\Door.h" />
@@ -201,6 +210,15 @@
     <ClInclude Include="Scenes\Week 4\UberMaterialScene.h" />
     <ClInclude Include="Materials\UberMaterial.h" />
     <ClInclude Include="Scenes\GradWork\SummonTestScene.h" />
+    <ClInclude Include="noise\TerrainGenrerator.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="..\3rdParty\FastNoise2\bin\FastNoise.dll">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="..\3rdParty\FastNoise2\bin\FastNoiseD.dll">
+      <FileType>Document</FileType>
+    </CopyFileToFolders>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
